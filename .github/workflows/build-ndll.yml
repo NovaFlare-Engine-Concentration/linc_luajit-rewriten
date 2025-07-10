@@ -1,4 +1,4 @@
-name: Build a
+name: Build Android NDLLs
 
 on:
   workflow_dispatch:
@@ -9,12 +9,17 @@ jobs:
     
     steps:
     - name: Checkout
-      uses: actions/checkout@main
+      uses: actions/checkout@v4
         
     - name: Setup Haxe
       uses: krdlab/setup-haxe@master
       with:
         haxe-version: 4.3.6
+        
+    - name: Install Android NDK
+      uses: android-actions/setup-android@v2
+      with:
+        ndk-version: "25.1.8937393"  # 使用较新的NDK版本
         
     - name: Install dependencies
       run: |
@@ -28,41 +33,43 @@ jobs:
         
     - name: Configure environment
       run: |
-        # 创建必要的符号链接
-        mkdir -p include
-        cd include
-        ln -s /usr/local/include/SDL2 SDL2 || true
-        
-        # 设置环境变量
+        # 设置NDK环境变量
+        echo "NDK_ROOT=$ANDROID_NDK_ROOT" >> $GITHUB_ENV
         echo "HXCPP=/Users/runner/haxe/lib/hxcpp/git/bin" >> $GITHUB_ENV
-    - name: Build modern NDLL (device)
-      run: |
-        cd project
-        haxelib run hxcpp Build.xml -Dandroid -DHXCPP_ARMV7 -DLUAJIT_ENABLE_LUA52COMPAT -D target=haxe
         
-    - name: Build modern NDLL (simulator)
-      run: |
-        cd project
-        haxelib run hxcpp Build.xml -Dandroid -DHXCPP_ARM64 -DLUAJIT_ENABLE_LUA52COMPAT -D target=haxe
+        # 创建必要的符号链接
+        mkdir -p project/include
+        cd project/include
+        ln -s $ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/c++/v1 c++ || true
         
-    - name: Build legacy NDLL (device)
+    - name: Build NDLLs
       run: |
         cd project
-        haxelib run hxcpp Build.xml -Dandroid -HXCPP_X86 -DLUAJIT_ENABLE_LUA52COMPAT -D target=haxe
         
-    - name: Build legacy NDLL (simulator)
-      run: |
-        cd project
-        haxelib run hxcpp Build.xml -Dandroid -HXCPP_X86_64 -DLUAJIT_ENABLE_LUA52COMPAT -D target=haxe
+        # 设置编译标志
+        export COMMON_FLAGS="-Iinclude -Iinclude/c++ -DLUAJIT_ENABLE_LUA52COMPAT"
+        
+        # 为所有架构构建
+        for arch in armeabi-v7a arm64-v8a x86 x86_64; do
+          case $arch in
+            armeabi-v7a) flags="-DHXCPP_ARMV7" ;;
+            arm64-v8a) flags="-DHXCPP_ARM64" ;;
+            x86) flags="-DHXCPP_X86" ;;
+            x86_64) flags="-DHXCPP_X86_64" ;;
+          esac
+          
+          echo "Building $arch..."
+          haxelib run hxcpp Build.xml -Dandroid $flags $COMMON_FLAGS
+        done
         
     - name: Verify artifacts
       run: |
         ls -la project/luajit/lib/
         echo "Artifacts:"
-        find ndll -name '*.a'
+        find project/ndll -name '*.ndll' -o -name '*.a'
         
     - name: Upload Artifact
-      uses: actions/upload-artifact@main
+      uses: actions/upload-artifact@v4
       with:
         name: ndll-binaries
         path: project/luajit/lib/
