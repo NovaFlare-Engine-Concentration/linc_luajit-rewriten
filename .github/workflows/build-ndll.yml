@@ -1,1 +1,68 @@
+name: Build a
 
+on:
+  workflow_dispatch:
+
+jobs:
+  build-Android:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@main
+        
+    - name: Setup Haxe
+      uses: krdlab/setup-haxe@master
+      with:
+        haxe-version: 4.3.6
+        
+    - name: Install dependencies
+      run: |
+        brew install pkg-config
+        
+        # 安装 Haxe 库
+        haxelib install hxcpp
+        haxelib install lime
+        haxelib run lime setup
+        
+    - name: Configure environment
+      run: |
+        # 创建必要的符号链接
+        mkdir -p include
+        cd include
+        ln -s /usr/local/include/SDL2 SDL2 || true
+        
+        # 设置环境变量
+        echo "HXCPP=/Users/runner/haxe/lib/hxcpp/git/bin" >> $GITHUB_ENV
+    - name: Build modern NDLL (device)
+      run: |
+        cd project
+        haxelib run hxcpp Build.xml -Dandroid -DHXCPP_ARMV7 -DLUAJIT_ENABLE_LUA52COMPAT
+        
+    - name: Build modern NDLL (simulator)
+      run: |
+        cd project
+        haxelib run hxcpp Build.xml -Dandroid -DHXCPP_ARM64 -DLUAJIT_ENABLE_LUA52COMPAT
+        
+    - name: Build legacy NDLL (device)
+      run: |
+        cd project
+        haxelib run hxcpp Build.xml -Dandroid -HXCPP_X86 -DLUAJIT_ENABLE_LUA52COMPAT
+        
+    - name: Build legacy NDLL (simulator)
+      run: |
+        cd project
+        haxelib run hxcpp Build.xml -Dandroid -HXCPP_X86_64 -DLUAJIT_ENABLE_LUA52COMPAT
+        
+    - name: Verify artifacts
+      run: |
+        ls -la project/luajit/lib/
+        echo "Artifacts:"
+        find ndll -name '*.a'
+        
+    - name: Upload Artifact
+      uses: actions/upload-artifact@main
+      with:
+        name: ndll-binaries
+        path: project/luajit/lib/
+        if-no-files-found: error
