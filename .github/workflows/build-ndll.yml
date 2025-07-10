@@ -38,22 +38,22 @@ jobs:
     - name: Build modern NDLL (device)
       run: |
         cd project
-        haxelib run hxcpp Build.xml -Dandroid -DHXCPP_ARMV7 -DLUAJIT_ENABLE_LUA52COMPAT
+        haxelib run hxcpp Build.xml -Dandroid -DHXCPP_ARMV7 -DLUAJIT_ENABLE_LUA52COMPAT -D target=haxe
         
     - name: Build modern NDLL (simulator)
       run: |
         cd project
-        haxelib run hxcpp Build.xml -Dandroid -DHXCPP_ARM64 -DLUAJIT_ENABLE_LUA52COMPAT
+        haxelib run hxcpp Build.xml -Dandroid -DHXCPP_ARM64 -DLUAJIT_ENABLE_LUA52COMPAT -D target=haxe
         
     - name: Build legacy NDLL (device)
       run: |
         cd project
-        haxelib run hxcpp Build.xml -Dandroid -HXCPP_X86 -DLUAJIT_ENABLE_LUA52COMPAT
+        haxelib run hxcpp Build.xml -Dandroid -HXCPP_X86 -DLUAJIT_ENABLE_LUA52COMPAT -D target=haxe
         
     - name: Build legacy NDLL (simulator)
       run: |
         cd project
-        haxelib run hxcpp Build.xml -Dandroid -HXCPP_X86_64 -DLUAJIT_ENABLE_LUA52COMPAT
+        haxelib run hxcpp Build.xml -Dandroid -HXCPP_X86_64 -DLUAJIT_ENABLE_LUA52COMPAT -D target=haxe
         
     - name: Verify artifacts
       run: |
