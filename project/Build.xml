@@ -19,7 +19,7 @@
 		<file name="${haxelib:linc_luajit}/project/src/linc_lua.cpp" />
 	</files>
 
-	<target id="haxe">
+	<target id="default">
 		<section if="windows" unless="mingw">
 			<lib name="${haxelib:linc_luajit}/project/luajit/lib/Windows/lua51-armv7.lib" if="HXCPP_ARMV7" />
 			<lib name="${haxelib:linc_luajit}/project/luajit/lib/Windows/lua51-arm64.lib" if="HXCPP_ARM64" />
