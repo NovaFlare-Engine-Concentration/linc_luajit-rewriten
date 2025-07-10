@@ -24,6 +24,7 @@ jobs:
         haxelib install hxcpp
         haxelib install lime
         haxelib run lime setup
+        haxelib git linc_luajit https://github.com/NovaFlare-Engine-Concentration/linc_luajit-rewriten.git main
         
     - name: Configure environment
       run: |
